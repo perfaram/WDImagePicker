@@ -18,6 +18,7 @@ internal class WDImageCropViewController: UIViewController {
     var delegate: WDImageCropControllerDelegate?
     var cropSize: CGSize!
     var resizableCropArea = false
+    var lockAspectRatio = false
 
     private var croppedImage: UIImage!
 
@@ -72,6 +73,7 @@ internal class WDImageCropViewController: UIViewController {
         self.imageCropView = WDImageCropView(frame: self.view.bounds)
         self.imageCropView.imageToCrop = sourceImage
         self.imageCropView.resizableCropArea = self.resizableCropArea
+        self.imageCropView.lockAspectRatio = self.lockAspectRatio
         self.imageCropView.cropSize = cropSize
         self.view.addSubview(self.imageCropView)
     }

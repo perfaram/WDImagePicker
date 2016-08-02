@@ -38,6 +38,7 @@ private class ScrollView: UIScrollView {
 
 internal class WDImageCropView: UIView, UIScrollViewDelegate {
     var resizableCropArea = false
+    var lockAspectRatio = false
 
     private var scrollView: UIScrollView!
     private var imageView: UIImageView!
@@ -72,7 +73,7 @@ internal class WDImageCropView: UIView, UIScrollViewDelegate {
             } else {
                 if self.resizableCropArea {
                     self.cropOverlayView = WDResizableCropOverlayView(frame: self.bounds,
-                        initialContentSize: CGSizeMake(newValue.width, newValue.height))
+                        initialContentSize: CGSizeMake(newValue.width, newValue.height), lockAspectRatio: self.lockAspectRatio)
                 } else {
                     self.cropOverlayView = WDImageCropOverlayView(frame: self.bounds)
                 }

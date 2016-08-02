@@ -11,14 +11,22 @@ import UIKit
 internal class WDCropBorderView: UIView {
     private let kNumberOfBorderHandles: CGFloat = 8
     private let kHandleDiameter: CGFloat = 24
+    private var lockAspectRatio: Bool
+
+    convenience init(frame: CGRect, lockAspectRatio locked: Bool) {
+        self.init(frame: frame)
+        self.lockAspectRatio = locked
+    }
 
     override init(frame: CGRect) {
+        self.lockAspectRatio = false
         super.init(frame: frame)
 
         self.backgroundColor = UIColor.clearColor()
     }
 
     required init?(coder aDecoder: NSCoder) {
+        self.lockAspectRatio = false
         super.init(coder: aDecoder)
 
         self.backgroundColor = UIColor.clearColor()
@@ -53,17 +61,19 @@ internal class WDCropBorderView: UIView {
         let bottomRowY = height - kHandleDiameter
         let middleRowY = bottomRowY / 2
 
-        //starting with the upper left corner and then following clockwise
-        let topLeft = CGRectMake(leftColX, topRowY, kHandleDiameter, kHandleDiameter)
-        let topCenter = CGRectMake(centerColX, topRowY, kHandleDiameter, kHandleDiameter)
-        let topRight = CGRectMake(rightColX, topRowY, kHandleDiameter, kHandleDiameter)
-        let middleRight = CGRectMake(rightColX, middleRowY, kHandleDiameter, kHandleDiameter)
-        let bottomRight = CGRectMake(rightColX, bottomRowY, kHandleDiameter, kHandleDiameter)
-        let bottomCenter = CGRectMake(centerColX, bottomRowY, kHandleDiameter, kHandleDiameter)
-        let bottomLeft = CGRectMake(leftColX, bottomRowY, kHandleDiameter, kHandleDiameter)
-        let middleLeft = CGRectMake(leftColX, middleRowY, kHandleDiameter, kHandleDiameter)
+        var handleArray = [CGRect]()
+        handleArray.append(CGRectMake(leftColX, topRowY, kHandleDiameter, kHandleDiameter)) //top left
+        handleArray.append(CGRectMake(rightColX, topRowY, kHandleDiameter, kHandleDiameter)) //top right
+        handleArray.append(CGRectMake(rightColX, bottomRowY, kHandleDiameter, kHandleDiameter)) //bottom right
+        handleArray.append(CGRectMake(leftColX, bottomRowY, kHandleDiameter, kHandleDiameter)) //bottom left
 
-        return [topLeft, topCenter, topRight, middleRight, bottomRight, bottomCenter, bottomLeft,
-            middleLeft]
+        if !lockAspectRatio {
+            handleArray.append(CGRectMake(centerColX, topRowY, kHandleDiameter, kHandleDiameter)) //top center
+            handleArray.append(CGRectMake(rightColX, middleRowY, kHandleDiameter, kHandleDiameter)) //middle right
+            handleArray.append(CGRectMake(centerColX, bottomRowY, kHandleDiameter, kHandleDiameter)) //bottom center
+            handleArray.append(CGRectMake(leftColX, middleRowY, kHandleDiameter, kHandleDiameter)) //middle left
+        }
+
+        return handleArray
     }
 }

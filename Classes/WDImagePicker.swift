@@ -17,6 +17,7 @@ import UIKit
     public var delegate: WDImagePickerDelegate?
     public var cropSize: CGSize!
     public var resizableCropArea = false
+    public var lockAspectRatio = false
 
     private var _imagePickerController: UIImagePickerController!
 
@@ -49,6 +50,7 @@ import UIKit
         let cropController = WDImageCropViewController()
         cropController.sourceImage = info[UIImagePickerControllerOriginalImage] as! UIImage
         cropController.resizableCropArea = self.resizableCropArea
+        cropController.lockAspectRatio = self.lockAspectRatio
         cropController.cropSize = self.cropSize
         cropController.delegate = self
         picker.pushViewController(cropController, animated: true)

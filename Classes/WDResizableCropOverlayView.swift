@@ -26,6 +26,7 @@ internal class WDResizableCropOverlayView: WDImageCropOverlayView {
     private var anchor: CGPoint!
     private var startPoint: CGPoint!
     private var resizeMultiplyer = WDResizableViewBorderMultiplyer()
+    private var lockAspectRatio: Bool = false
 
     override var frame: CGRect {
         get {
@@ -52,9 +53,9 @@ internal class WDResizableCropOverlayView: WDImageCropOverlayView {
         }
     }
 
-    init(frame: CGRect, initialContentSize: CGSize) {
+    init(frame: CGRect, initialContentSize: CGSize, lockAspectRatio locked: Bool = false) {
         super.init(frame: frame)
-
+        self.lockAspectRatio = locked
         self.initialContentSize = initialContentSize
         self.addContentViews()
     }
@@ -114,7 +115,7 @@ internal class WDResizableCropOverlayView: WDImageCropOverlayView {
             (width - initialContentSize.width) / 2 - kBorderCorrectionValue,
             (height - toolbarSize - initialContentSize.height) / 2 - kBorderCorrectionValue,
             initialContentSize.width + kBorderCorrectionValue * 2,
-            initialContentSize.height + kBorderCorrectionValue * 2))
+            initialContentSize.height + kBorderCorrectionValue * 2), lockAspectRatio: self.lockAspectRatio)
         self.addSubview(cropBorderView)
     }
 
@@ -145,23 +146,26 @@ internal class WDResizableCropOverlayView: WDImageCropOverlayView {
         let bottomY = cropBorderView.bounds.size.height
         let middleY = topY + (bottomY - topY) / 2
 
-        // starting with the upper left corner and then following the rect clockwise
-        let topLeft = CGPointMake(leftX, topY)
-        let topCenter = CGPointMake(centerX, topY)
-        let topRight = CGPointMake(rightX, topY)
-        let middleRight = CGPointMake(rightX, middleY)
-        let bottomRight = CGPointMake(rightX, bottomY)
-        let bottomCenter = CGPointMake(centerX, bottomY)
-        let bottomLeft = CGPointMake(leftX, bottomY)
-        let middleLeft = CGPointMake(leftX, middleY)
+        var handleArray = [CGPoint]()
+        handleArray.append(CGPointMake(leftX, topY)) //top left
+        handleArray.append(CGPointMake(rightX, topY)) //top right
+        handleArray.append(CGPointMake(rightX, bottomY)) //bottom right
+        handleArray.append(CGPointMake(leftX, bottomY)) //bottom left
 
-        return [topLeft, topCenter, topRight, middleRight, bottomRight, bottomCenter, bottomLeft,
-            middleLeft]
+        if !lockAspectRatio {
+            handleArray.append(CGPointMake(centerX, topY)) //top center
+            handleArray.append(CGPointMake(rightX, middleY)) //middle right
+            handleArray.append(CGPointMake(centerX, bottomY)) //bottom center
+            handleArray.append(CGPointMake(leftX, middleY)) //middle left
+        }
+
+        return handleArray
     }
 
     private func resizeWithTouchPoint(point: CGPoint) {
         // This is the place where all the magic happends
         // prevent goint offscreen...
+
         let border = kBorderCorrectionValue * 2
         var pointX = point.x < border ? border : point.x
         var pointY = point.y < border ? border : point.y
@@ -170,10 +174,18 @@ internal class WDResizableCropOverlayView: WDImageCropOverlayView {
         pointY = pointY > self.superview!.bounds.size.height - border ?
             self.superview!.bounds.size.height - border : pointY
 
-        let heightChange = (pointY - startPoint.y) * resizeMultiplyer.heightMultiplyer
-        let widthChange = (startPoint.x - pointX) * resizeMultiplyer.widthMultiplyer
+        var heightChange = (pointY - startPoint.y) * resizeMultiplyer.heightMultiplyer
+        var widthChange = (startPoint.x - pointX) * resizeMultiplyer.widthMultiplyer
+
+        if lockAspectRatio {
+            let averageChange = (heightChange + widthChange) / 2
+            heightChange = averageChange
+            widthChange = averageChange
+        }
+
         let xChange = -1 * widthChange * resizeMultiplyer.xMultiplyer
         let yChange = -1 * heightChange * resizeMultiplyer.yMultiplyer
+
 
         var newFrame =  CGRectMake(
             cropBorderView.frame.origin.x + xChange,
@@ -192,31 +204,62 @@ internal class WDResizableCropOverlayView: WDImageCropOverlayView {
         if newFrame.size.width < 64 {
             newFrame.size.width = cropBorderView.frame.size.width
             newFrame.origin.x = cropBorderView.frame.origin.x
+            if lockAspectRatio {
+                newFrame.size.height = cropBorderView.frame.size.height
+                newFrame.origin.y = cropBorderView.frame.origin.y
+            }
         }
+
         if newFrame.size.height < 64 {
             newFrame.size.height = cropBorderView.frame.size.height
             newFrame.origin.y = cropBorderView.frame.origin.y
+            if lockAspectRatio {
+                newFrame.size.width = cropBorderView.frame.size.width
+                newFrame.origin.x = cropBorderView.frame.origin.x
+            }
         }
 
         if newFrame.origin.x < 0 {
             newFrame.size.width = cropBorderView.frame.size.width +
                 (cropBorderView.frame.origin.x - self.superview!.bounds.origin.x)
             newFrame.origin.x = 0
+            if lockAspectRatio {
+                newFrame.size.height = cropBorderView.frame.size.height +
+                    (cropBorderView.frame.origin.y - self.superview!.bounds.origin.y)
+                newFrame.origin.y = 0
+            }
         }
 
         if newFrame.origin.y < 0 {
             newFrame.size.height = cropBorderView.frame.size.height +
                 (cropBorderView.frame.origin.y - self.superview!.bounds.origin.y)
             newFrame.origin.y = 0
+            if lockAspectRatio {
+                newFrame.size.width = cropBorderView.frame.size.width +
+                    (cropBorderView.frame.origin.x - self.superview!.bounds.origin.x)
+                newFrame.origin.x = 0
+            }
         }
 
         if newFrame.size.width + newFrame.origin.x > self.frame.size.width {
-            newFrame.size.width = self.frame.size.width - cropBorderView.frame.origin.x
+            if lockAspectRatio {
+                newFrame.size.width = cropBorderView.frame.size.width
+                newFrame.size.height = cropBorderView.frame.size.height
+            }
+            else {
+                newFrame.size.width = self.frame.size.width - cropBorderView.frame.origin.x
+            }
         }
 
         if newFrame.size.height + newFrame.origin.y > self.frame.size.height - toolbarSize {
-            newFrame.size.height = self.frame.size.height -
-                cropBorderView.frame.origin.y - toolbarSize
+            if lockAspectRatio {
+                newFrame.size.width = cropBorderView.frame.size.width
+                newFrame.size.height = cropBorderView.frame.size.height
+            }
+            else {
+                newFrame.size.height = self.frame.size.height -
+                    cropBorderView.frame.origin.y - toolbarSize
+            }
         }
 
         return newFrame
