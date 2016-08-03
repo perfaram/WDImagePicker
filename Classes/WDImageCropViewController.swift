@@ -10,7 +10,7 @@ import UIKit
 import CoreGraphics
 
 internal protocol WDImageCropControllerDelegate {
-    func imageCropController(imageCropController: WDImageCropViewController, didFinishWithCroppedImage croppedImage: UIImage)
+    func imageCropController(imageCropController: WDImageCropViewController, didFinishWithCroppedRect croppedRect: CGRect)
 }
 
 internal class WDImageCropViewController: UIViewController {
@@ -20,7 +20,7 @@ internal class WDImageCropViewController: UIViewController {
     var resizableCropArea = false
     var lockAspectRatio = false
 
-    private var croppedImage: UIImage!
+    private var croppedRect: CGRect!
 
     private var imageCropView: WDImageCropView!
     private var toolbar: UIToolbar!
@@ -58,8 +58,8 @@ internal class WDImageCropViewController: UIViewController {
     }
 
     func actionUse(sender: AnyObject) {
-        croppedImage = self.imageCropView.croppedImage()
-        self.delegate?.imageCropController(self, didFinishWithCroppedImage: croppedImage)
+        croppedRect = self.imageCropView.croppedImage()
+        self.delegate?.imageCropController(self, didFinishWithCroppedRect: croppedRect)
     }
 
     private func setupNavigationBar() {

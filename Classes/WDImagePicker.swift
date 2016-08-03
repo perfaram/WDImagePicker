@@ -10,6 +10,8 @@ import UIKit
 
 @objc public protocol WDImagePickerDelegate {
     optional func imagePicker(imagePicker: WDImagePicker, pickedImage: UIImage)
+    optional func imagePicker(imagePicker: WDImagePicker, pickedRect: CGRect, onImage: UIImage)
+    var prefersPickedImageRectangle: Bool { get }
     optional func imagePickerDidCancel(imagePicker: WDImagePicker)
 }
 
@@ -20,6 +22,7 @@ import UIKit
     public var lockAspectRatio = false
 
     private var _imagePickerController: UIImagePickerController!
+    private var chosenImage: UIImage?
 
     public var imagePickerController: UIImagePickerController {
         return _imagePickerController
@@ -48,7 +51,8 @@ import UIKit
 
     public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
         let cropController = WDImageCropViewController()
-        cropController.sourceImage = info[UIImagePickerControllerOriginalImage] as! UIImage
+        chosenImage = (info[UIImagePickerControllerOriginalImage] as! UIImage)
+        cropController.sourceImage = chosenImage!
         cropController.resizableCropArea = self.resizableCropArea
         cropController.lockAspectRatio = self.lockAspectRatio
         cropController.cropSize = self.cropSize
@@ -56,7 +60,17 @@ import UIKit
         picker.pushViewController(cropController, animated: true)
     }
 
-    func imageCropController(imageCropController: WDImageCropViewController, didFinishWithCroppedImage croppedImage: UIImage) {
-        self.delegate?.imagePicker?(self, pickedImage: croppedImage)
+    func imageCropController(imageCropController: WDImageCropViewController, didFinishWithCroppedRect croppedRect: CGRect) {
+        guard let chosenImage = chosenImage else { return } //should never happen, unless this function is called outside of WDImagePicker's process
+        if let rectInsteadOfImage = delegate?.prefersPickedImageRectangle where rectInsteadOfImage == true {
+            self.delegate?.imagePicker?(self, pickedRect: croppedRect, onImage: chosenImage)
+        }
+        else {
+            // finally crop image
+            let imageRef = CGImageCreateWithImageInRect(chosenImage.CGImage, croppedRect)
+            let croppedImage = UIImage(CGImage: imageRef!, scale: chosenImage.scale,
+                                       orientation: chosenImage.imageOrientation)
+            self.delegate?.imagePicker?(self, pickedImage: croppedImage)
+        }
     }
 }

@@ -178,7 +178,7 @@ internal class WDImageCropView: UIView, UIScrollViewDelegate {
         return self.imageView
     }
 
-    func croppedImage() -> UIImage {
+    func croppedImage() -> CGRect {
         // Calculate rect that needs to be cropped
         var visibleRect = resizableCropArea ?
             calcVisibleRectForResizeableCropArea() : calcVisibleRectForCropArea()
@@ -187,12 +187,7 @@ internal class WDImageCropView: UIView, UIScrollViewDelegate {
         let rectTransform = orientationTransformedRectOfImage(imageToCrop!)
         visibleRect = CGRectApplyAffineTransform(visibleRect, rectTransform);
 
-        // finally crop image
-        let imageRef = CGImageCreateWithImageInRect(imageToCrop!.CGImage, visibleRect)
-        let result = UIImage(CGImage: imageRef!, scale: imageToCrop!.scale,
-            orientation: imageToCrop!.imageOrientation)
-
-        return result
+        return visibleRect
     }
 
     private func calcVisibleRectForResizeableCropArea() -> CGRect {
