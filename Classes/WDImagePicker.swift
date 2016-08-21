@@ -9,10 +9,11 @@
 import UIKit
 
 @objc public protocol WDImagePickerDelegate {
-    optional func imagePicker(imagePicker: WDImagePicker, pickedImage: UIImage)
-    optional func imagePicker(imagePicker: WDImagePicker, pickedRect: CGRect, onImage: UIImage)
+    @objc optional func imagePicker(_ imagePicker: WDImagePicker, pickedImage: UIImage)
+    //commented out while SR-2268 gets resolved
+    //@objc optional func imagePicker(_ imagePicker: WDImagePicker, pickedRect: CGRect, onImage: UIImage)
     var prefersPickedImageRectangle: Bool { get }
-    optional func imagePickerDidCancel(imagePicker: WDImagePicker)
+    @objc optional func imagePickerDidCancel(_ imagePicker: WDImagePicker)
 }
 
 @objc public class WDImagePicker: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate, WDImageCropControllerDelegate {
@@ -31,17 +32,17 @@ import UIKit
     override public init() {
         super.init()
 
-        self.cropSize = CGSizeMake(320, 320)
+        self.cropSize = CGSize(width: 320, height: 320)
         _imagePickerController = UIImagePickerController()
         _imagePickerController.delegate = self
-        _imagePickerController.sourceType = .PhotoLibrary
+        _imagePickerController.sourceType = .photoLibrary
     }
 
     private func hideController() {
-        self._imagePickerController.dismissViewControllerAnimated(true, completion: nil)
+        self._imagePickerController.dismiss(animated: true, completion: nil)
     }
 
-    public func imagePickerControllerDidCancel(picker: UIImagePickerController) {
+    public func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         if self.delegate?.imagePickerDidCancel != nil {
             self.delegate?.imagePickerDidCancel!(self)
         } else {
@@ -49,7 +50,7 @@ import UIKit
         }
     }
 
-    public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+    public func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
         let cropController = WDImageCropViewController()
         chosenImage = (info[UIImagePickerControllerOriginalImage] as! UIImage)
         cropController.sourceImage = chosenImage!
@@ -60,15 +61,16 @@ import UIKit
         picker.pushViewController(cropController, animated: true)
     }
 
-    func imageCropController(imageCropController: WDImageCropViewController, didFinishWithCroppedRect croppedRect: CGRect) {
+    func imageCropController(_ imageCropController: WDImageCropViewController, didFinishWithCroppedRect croppedRect: CGRect) {
         guard let chosenImage = chosenImage else { return } //should never happen, unless this function is called outside of WDImagePicker's process
-        if let rectInsteadOfImage = delegate?.prefersPickedImageRectangle where rectInsteadOfImage == true {
-            self.delegate?.imagePicker?(self, pickedRect: croppedRect, onImage: chosenImage)
+        if let rectInsteadOfImage = delegate?.prefersPickedImageRectangle,  rectInsteadOfImage == true {
+            //commented out while SR-2268 gets resolved
+            //self.delegate?.imagePicker?(self, pickedRect: croppedRect, onImage: chosenImage)
         }
         else {
             // finally crop image
-            let imageRef = CGImageCreateWithImageInRect(chosenImage.CGImage, croppedRect)
-            let croppedImage = UIImage(CGImage: imageRef!, scale: chosenImage.scale,
+            let imageRef = chosenImage.cgImage?.cropping(to: croppedRect)
+            let croppedImage = UIImage(cgImage: imageRef!, scale: chosenImage.scale,
                                        orientation: chosenImage.imageOrientation)
             self.delegate?.imagePicker?(self, pickedImage: croppedImage)
         }

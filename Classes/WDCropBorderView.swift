@@ -22,29 +22,28 @@ internal class WDCropBorderView: UIView {
         self.lockAspectRatio = false
         super.init(frame: frame)
 
-        self.backgroundColor = UIColor.clearColor()
+        self.backgroundColor = UIColor.clear
     }
 
     required init?(coder aDecoder: NSCoder) {
         self.lockAspectRatio = false
         super.init(coder: aDecoder)
 
-        self.backgroundColor = UIColor.clearColor()
+        self.backgroundColor = UIColor.clear
     }
 
-    override func drawRect(rect: CGRect) {
+    override func draw(_ rect: CGRect) {
         let context = UIGraphicsGetCurrentContext()
 
-        CGContextSetStrokeColorWithColor(context,
-            UIColor(red: 1, green: 1, blue: 1, alpha: 0.5).CGColor)
-        CGContextSetLineWidth(context, 1.5)
-        CGContextAddRect(context, CGRectMake(kHandleDiameter / 2, kHandleDiameter / 2,
-            rect.size.width - kHandleDiameter, rect.size.height - kHandleDiameter))
-        CGContextStrokePath(context)
+        context?.setStrokeColor(UIColor(red: 1, green: 1, blue: 1, alpha: 0.5).cgColor)
+        context?.setLineWidth(1.5)
+        context?.addRect(CGRect(x: kHandleDiameter / 2, y: kHandleDiameter / 2,
+            width: rect.size.width - kHandleDiameter, height: rect.size.height - kHandleDiameter))
+        context?.strokePath()
 
-        CGContextSetRGBFillColor(context, 1, 1, 1, 0.95)
+        context?.setFillColor(red: 1, green: 1, blue: 1, alpha: 0.95)
         for handleRect in calculateAllNeededHandleRects() {
-            CGContextFillEllipseInRect(context, handleRect)
+            context?.fillEllipse(in: handleRect)
         }
     }
 
@@ -62,16 +61,16 @@ internal class WDCropBorderView: UIView {
         let middleRowY = bottomRowY / 2
 
         var handleArray = [CGRect]()
-        handleArray.append(CGRectMake(leftColX, topRowY, kHandleDiameter, kHandleDiameter)) //top left
-        handleArray.append(CGRectMake(rightColX, topRowY, kHandleDiameter, kHandleDiameter)) //top right
-        handleArray.append(CGRectMake(rightColX, bottomRowY, kHandleDiameter, kHandleDiameter)) //bottom right
-        handleArray.append(CGRectMake(leftColX, bottomRowY, kHandleDiameter, kHandleDiameter)) //bottom left
+        handleArray.append(CGRect(x: leftColX, y: topRowY, width: kHandleDiameter, height: kHandleDiameter)) //top left
+        handleArray.append(CGRect(x: rightColX, y: topRowY, width: kHandleDiameter, height: kHandleDiameter)) //top right
+        handleArray.append(CGRect(x: rightColX, y: bottomRowY, width: kHandleDiameter, height: kHandleDiameter)) //bottom right
+        handleArray.append(CGRect(x: leftColX, y: bottomRowY, width: kHandleDiameter, height: kHandleDiameter)) //bottom left
 
         if !lockAspectRatio {
-            handleArray.append(CGRectMake(centerColX, topRowY, kHandleDiameter, kHandleDiameter)) //top center
-            handleArray.append(CGRectMake(rightColX, middleRowY, kHandleDiameter, kHandleDiameter)) //middle right
-            handleArray.append(CGRectMake(centerColX, bottomRowY, kHandleDiameter, kHandleDiameter)) //bottom center
-            handleArray.append(CGRectMake(leftColX, middleRowY, kHandleDiameter, kHandleDiameter)) //middle left
+            handleArray.append(CGRect(x: centerColX, y: topRowY, width: kHandleDiameter, height: kHandleDiameter)) //top center
+            handleArray.append(CGRect(x: rightColX, y: middleRowY, width: kHandleDiameter, height: kHandleDiameter)) //middle right
+            handleArray.append(CGRect(x: centerColX, y: bottomRowY, width: kHandleDiameter, height: kHandleDiameter)) //bottom center
+            handleArray.append(CGRect(x: leftColX, y: middleRowY, width: kHandleDiameter, height: kHandleDiameter)) //middle left
         }
 
         return handleArray
